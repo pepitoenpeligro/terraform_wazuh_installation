@@ -52,8 +52,8 @@ terraform apply
 
 ### Demo
 
-![](demo/init.mp4)
+https://user-images.githubusercontent.com/14912971/174239699-df813e38-92bd-4d69-880d-e475b27a4f53.mp4
 
-![](demo/execution.mp4)
+https://user-images.githubusercontent.com/14912971/174239704-b893134d-35de-4dd9-9de9-841031af2cc4.mp4
 
-![](demo/access_and_agent_registration.mp4)
+https://user-images.githubusercontent.com/14912971/174239707-53274a0f-c265-4e27-951f-b9781b87a7fc.mp4
