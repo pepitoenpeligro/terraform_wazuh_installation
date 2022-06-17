@@ -1,0 +1,47 @@
+---
+  - name: Installing and configuring Wazuh-indexer single-node cluster
+    become: yes
+    hosts: localhost
+
+    vars:
+      - indexer_ip: "{{ lookup('file', '/home/ec2-user/indexer_ip.txt') }} "
+      - server_ip: "{{ lookup('file', '/home/ec2-user/server_ip.txt') }} "
+      - dashboard_ip: "{{ lookup('file', '/home/ec2-user/dashboard_ip.txt') }} "
+
+
+    tasks:
+      - name: Download the Wazuh installation asistant 4.3.4
+        shell: curl -sO https://s3.us-west-1.amazonaws.com/packages.wazuh.com/4.3/wazuh-install.sh
+
+      - name: Download the Wazuh configuration file
+        shell: curl -sO https://s3.us-west-1.amazonaws.com/packages.wazuh.com/4.3/config.yml
+
+      - name: Replace Indexer IP
+        shell: sed -i '5s/<indexer-node-ip>/{{ indexer_ip }}/g' /home/ec2-user/config.yml
+
+      - name: Replace Server IP
+        shell: sed -i '15s/<wazuh-manager-ip>/{{ server_ip }}/g' /home/ec2-user/config.yml
+
+      - name: Replace Dashboard IP
+        shell: sed -i '24s/<dashboard-node-ip>/{{ dashboard_ip }}/g' /home/ec2-user/config.yml
+
+      - name: Generate config files
+        shell: cd /home/ec2-user/ && bash wazuh-install.sh --generate-config-files
+
+      - name: Send certs to server
+        shell: scp -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -i  /home/ec2-user/aws_key_server.pem /home/ec2-user/wazuh-install-files.tar ec2-user@{{ server_ip[:-1] }}:/home/ec2-user/
+
+      - name: Send certs to dashboard
+        shell: scp -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -i  /home/ec2-user/aws_key_dashboard.pem /home/ec2-user/wazuh-install-files.tar ec2-user@{{ dashboard_ip[:-1] }}:/home/ec2-user/
+
+      - name: Install Wazuh-indexer
+        shell: bash wazuh-install.sh --wazuh-indexer node-1
+        register: wazuhindexerwizard
+
+      - debug: var=wazuhindexerwizard.stdout_lines
+
+      - name: Start Cluster service
+        shell: bash wazuh-install.sh --start-cluster
+        register: wazuhindexercluster
+
+      - debug: var=wazuhindexercluster.stdout_lines

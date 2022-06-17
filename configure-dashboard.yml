@@ -1,0 +1,36 @@
+---
+  - name: Installing and configuring Wazuh-dashboard 
+    become: yes
+    hosts: localhost
+
+    vars:
+      - indexer_ip: "{{ lookup('file', '/home/ec2-user/indexer_ip.txt') }} "
+      - server_ip: "{{ lookup('file', '/home/ec2-user/server_ip.txt') }} "
+      - dashboard_ip: "{{ lookup('file', '/home/ec2-user/dashboard_ip.txt') }} "
+
+    tasks:
+
+      - name: Download the Wazuh installation asistant 4.3.4
+        shell: curl -sO https://s3.us-west-1.amazonaws.com/packages.wazuh.com/4.3/wazuh-install.sh
+
+      - name: Download the Wazuh configuration file
+        shell: curl -sO https://s3.us-west-1.amazonaws.com/packages.wazuh.com/4.3/config.yml
+
+      - name: Replace Indexer IP
+        shell: sed -i '5s/<indexer-node-ip>/{{ indexer_ip }}/g' /home/ec2-user/config.yml
+
+      - name: Replace Server IP
+        shell: sed -i '15s/<wazuh-manager-ip>/{{ server_ip }}/g' /home/ec2-user/config.yml
+
+      - name: Replace Dashboard IP
+        shell: sed -i '24s/<dashboard-node-ip>/{{ dashboard_ip }}/g' /home/ec2-user/config.yml
+
+
+      - name: Run assistant for dashboard installation
+        shell: bash wazuh-install.sh --wazuh-dashboard dashboard
+
+      - name: Print password
+        shell: tar -O -xvf wazuh-install-files.tar wazuh-install-files/passwords.wazuh
+        register: dashboard
+
+      - debug: var=dashboard.stdout_lines
